@@ -1,0 +1,1 @@
+A polling application written in Node,Express, and Socket.io using websockets for live updating of information.
