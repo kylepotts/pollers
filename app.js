@@ -5,6 +5,9 @@ var favicon = require('static-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var mongo = require('mongodb');
+var db = require('mongoskin').db('mongodb://localhost:27017/pollers'); 
+
 
 var routes = require('./routes');
 var users = require('./routes/user');
@@ -22,11 +25,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(app.router);
+//app.use(app.router);
+
+// Make db accessible
+app.use(function(req,res,next){
+    req.db = db;
+    next();
+});
 
 app.get('/', routes.index);
 app.get('/newPoll', newPoll.newPoll);
 app.get('/users', users.list);
+app.post('/newPoll',newPoll.newPollPost)
+
+
 
 /// catch 404 and forwarding to error handler
 app.use(function(req, res, next) {
