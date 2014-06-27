@@ -12,6 +12,7 @@ var db = require('mongoskin').db('mongodb://localhost:27017/pollers');
 var routes = require('./routes');
 var users = require('./routes/user');
 var newPoll = require('./routes/newPoll')
+var pollsRoute = require('./routes/poll')
 
 var app = express();
 
@@ -29,14 +30,30 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Make db accessible
 app.use(function(req,res,next){
+    console.log("hello")
     req.db = db;
     next();
 });
 
+app.param('id',function(req,res,next,id){
+    req.collection = db.collection('polls').findById(id,function(e,result){
+        if(e) return next(e)
+        else {
+            
+            req.poll = result
+            next()
+        }
+    })
+    
+})
+
 app.get('/', routes.index);
 app.get('/newPoll', newPoll.newPoll);
-app.get('/users', users.list);
 app.post('/newPoll',newPoll.newPollPost)
+app.get('/users', users.list);
+app.get('/poll/:id',pollsRoute.poll)
+
+
 
 
 
