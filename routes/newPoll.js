@@ -5,6 +5,7 @@ exports.newPoll = function(req, res){
 
 /* Post for a new Poll */
 exports.newPollPost = function(req,res){
+	
 	var db = req.db
 	console.log(db)
 	var pollName = req.body.name
