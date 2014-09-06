@@ -51,7 +51,7 @@
             <div class="well" style="max-height: 300px;overflow: auto;">
               <% for(var i=0; i<poll.options.length; i++) { %>
                   <label class="checkbox">
-                    <input type="checkbox" value="LOL"><%= poll.options[i] %>
+                    <input type="radio" name="radioOption" value=<%=i %>><%= poll.options[i] %>
                   </label>
                   <% } %>
 
@@ -68,6 +68,7 @@
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     <script src="http://code.highcharts.com/highcharts.js"></script>
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.1.0.js"></script>
     <script src="/javascripts/viewPoll.js"></script>
     <script type="text/javascript">
       $(function () {
@@ -81,7 +82,7 @@
         }
         console.log(data)
         console.log(poll)
-    $('#graph_container').highcharts({
+   var graph =   $('#graph_container').highcharts({
 
         chart: {
             plotBackgroundColor: null,
@@ -114,6 +115,7 @@
         }]
     });
 });
-    </script>
+
+</script>
   </body>
 </html>
