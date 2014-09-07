@@ -2,6 +2,10 @@
 /*
     Express specific variables
 */
+
+var mongoURI = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost:27017/pollers'
+console.log(mongoURI)
+
 var express = require('express');
 var http = require('http');
 var path = require('path');
@@ -12,7 +16,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('cookie-session')
 var mongo = require('mongodb');
-var db = require('mongoskin').db('mongodb://localhost:27017/pollers');
+var db = require('mongoskin').db(mongoURI);
 var app = express();
 var server = http.createServer(app)
 
