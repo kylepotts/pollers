@@ -9,11 +9,12 @@ var log4js = require('log4js')
 var logger = log4js.getLogger()
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var session = require('express-session')
+var session = require('cookie-session')
 var mongo = require('mongodb');
 var db = require('mongoskin').db('mongodb://localhost:27017/pollers');
 var app = express();
 var server = http.createServer(app)
+
 var io = require('socket.io').listen(server)
 var uuid = require('node-uuid');
 
@@ -34,16 +35,11 @@ app.get('/newPoll', newPoll.newPoll);
 app.post('/newPoll', newPoll.newPollPost)
 app.get('/users', users.list);
 app.get('/poll/:id', pollsRoute.poll)
-app.put('/poll/:id/:voteItem', pollsRoute.updatePoll)
 
 var updatesSocket
 
 
-/*
-io.on('connect',function(socket){
-  console.log("connected!")
-})
-*/
+
 server.listen(3001)
 
 
@@ -59,6 +55,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
 app.use(session({
+     key: 'app.sess',
     secret: 'keyboard cat'
 }))
 app.use(express.static(path.join(__dirname, 'public')));
@@ -75,19 +72,88 @@ io.on('connection', function (socket) {
         socket.disconnect()
     })
 
-    socket.on('pollUpdates', function (id) {
+    socket.on('pollUpdates', function (id,voteItem) {
         console.log("newMessage from id " + id)
         db.collection('polls').findById(id, function (e, result) {
             if (e) return next(e)
             else {
                 console.log(result)
-                socket.broadcast.emit('pollUpdates', result)
-                socket.emit('pollUpdates',result)
+                var mongod = require('mongoskin');
+                var poll = result
+                poll.totalVotes++
+                poll.votes[voteItem]++
+                var pollVotes = poll.votes
+                db.collection('polls').update(
+                                      {_id:mongod.helper.toObjectID(id)},
+                                      {
+                                        $inc:{totalVotes:1},
+                                        $set:{votes:pollVotes}
+                                      },
+                                      function(err,result){
+                                        if(err) throw err;
+                                        if(result) {
+                                          console.log("handler updated db")
 
-            }
+                                          db.collection('polls').findById(id, function (e, result) {
+                                              if (e) return next(e)
+                                              else {
+                                                socket.broadcast.emit('pollUpdates', result)
+                                                socket.emit('pollUpdates',result)
+                                              }
+
+                                          })
+                                      }
+
+                                      }
+                                    )
+
+              }
 
         })
     })
+
+    socket.on('changeVote',function(id,voteItem,prevItem){
+      console.log("changing Vote")
+      db.collection('polls').findById(id, function (e, result) {
+          if (e) return next(e)
+          else {
+              console.log(result)
+              var mongod = require('mongoskin');
+              var poll = result
+              //poll.totalVotes++
+              poll.votes[voteItem]++
+              poll.votes[prevItem]--
+              var pollVotes = poll.votes
+              db.collection('polls').update(
+                                    {_id:mongod.helper.toObjectID(id)},
+                                    {
+                                      $set:{votes:pollVotes}
+                                    },
+                                    function(err,result){
+                                      if(err) throw err;
+                                      if(result) {
+                                        console.log("handler updated db")
+
+                                        db.collection('polls').findById(id, function (e, result) {
+                                            if (e) return next(e)
+                                            else {
+                                              socket.broadcast.emit('pollUpdates', result)
+                                              socket.emit('pollUpdates',result)
+                                            }
+
+                                        })
+                                    }
+
+                                    }
+                                  )
+
+            }
+
+      })
+  })
+
+
+
 })
 
 
@@ -104,39 +170,21 @@ app.use(function (req, res, next) {
 
 app.param('id', function (req, res, next, id) {
     var endUrl = '/update' + id
-    if (updatesSocket == undefined)
-
     req.collection = db.collection('polls').findById(id, function (e, result) {
         if (e) return next(e)
         else {
             req.poll = result
-            session.uuid = uuid.v4()
-            if (req.session == undefined) {
-                req.session = session
-            }
+            if(session.visited == undefined){
+          console.log("undef")
+          uid = uuid.v4()
+          session.visited = {pollId:id,uuid:uid}
+          }
+            req.session = session
+            console.log(session.visited)
             next()
         }
     })
-
-
-    app.param('voteItem', function (req, res, next, voteItem) {
-        req.voteItem = voteItem
-        req.db = db
-        req.updateSocket = updatesSocket
-        req.collection = db.collection('polls').findById(id, function (e, result) {
-            if (e) return next(e)
-            else {
-                req.poll = result
-                next()
-            }
-        })
-    })
-
-})
-
-
-
-
+  })
 
 
 
@@ -168,6 +216,7 @@ app.use(function (err, req, res, next) {
         error: {}
     });
 });
+
 
 
 module.exports = app;
