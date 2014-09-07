@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /*
     Express specific variables
 */
