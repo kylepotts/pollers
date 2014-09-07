@@ -25,7 +25,11 @@ var uuid = require('node-uuid');
 
 
 
-
+console.log("db="+db)
+db.collection('polls').find().toArray(function(err, result) {
+    if (err) throw err;
+    console.log(result);
+});
 
 /*
     Routes variables
@@ -35,11 +39,7 @@ var users = require('./routes/user');
 var newPoll = require('./routes/newPoll')
 var pollsRoute = require('./routes/poll')
 
-app.get('/', routes.index);
-app.get('/newPoll', newPoll.newPoll);
-app.post('/newPoll', newPoll.newPollPost)
-app.get('/users', users.list);
-app.get('/poll/:id', pollsRoute.poll)
+
 
 var updatesSocket
 
@@ -64,7 +64,23 @@ app.use(session({
     secret: 'keyboard cat'
 }))
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Make db accessible
+app.use(function (req, res, next) {
+    console.log("doing stuff")
+    req.db = db;
+    req.io = io;
+    //req.session = session;
+    next();
+});
 app.use(app.router);
+
+
+app.get('/', routes.index);
+app.get('/newPoll', newPoll.newPoll);
+app.post('/newPoll', newPoll.newPollPost)
+app.get('/users', users.list);
+app.get('/poll/:id', pollsRoute.poll)
 
 /*
     Set up webSocket and functions
@@ -165,13 +181,7 @@ io.on('connection', function (socket) {
 
 
 
-// Make db accessible
-app.use(function (req, res, next) {
-    req.db = db;
-    req.io = io;
-    req.session = session;
-    next();
-});
+
 
 app.param('id', function (req, res, next, id) {
     var endUrl = '/update' + id

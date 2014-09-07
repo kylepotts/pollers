@@ -6,6 +6,7 @@ $('#submitNewPollButton').click(function(){
 		for(i=1; i<=numOptions; i++){
 			pollOpions[i-1]=$('#optionsForm'+i).val()
 		}
+		
 
 		var poll = {"name":pollName,"question":pollQuestion,"options":pollOpions}
 		console.log(poll)
@@ -37,5 +38,3 @@ $('#newOptionButton').click(function(){
 $('#pollForm').submit(function(event){
 	event.preventDefault();
 });
-
-
