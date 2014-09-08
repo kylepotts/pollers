@@ -137,6 +137,7 @@ io.on('connection', function (socket) {
               poll.votes[voteItem]++
               poll.votes[prevItem]--
               var pollVotes = poll.votes
+              console.log(pollVotes)
               db.collection('polls').update(
                                     {_id:mongod.helper.toObjectID(id)},
                                     {

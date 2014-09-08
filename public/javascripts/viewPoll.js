@@ -1,3 +1,5 @@
+var clicks = new Array()
+var currentClickIndex = 0
 function setup(){
     var lastPart = window.location.pathname.split('/').pop()
     updates = io.connect("http://localhost")
@@ -25,8 +27,8 @@ function updatePoll(id,selected,beforeValue){
         updates.emit("changeVote",id,selected,beforeValue)
 
     } else {
-        console.log("voting setting chicken")
-        setCookie("hasVoted"+id,"true",1)
+        console.log("voting setting")
+        setCookie("hasVoted"+id,"true",10)
         updates.emit("pollUpdates",id,selected)
     }
 
@@ -52,44 +54,33 @@ function getCookie(cname) {
     return "";
 }
 
-function checkCookie() {
-    var user = getCookie("username");
-    if (user != "") {
-        alert("Welcome again " + user);
-    } else {
-        user = prompt("Please enter your name:", "");
-        if (user != "" && user != null) {
-            setCookie("username", user, 365);
-        }
-    }
+function eraseCookie(name) {
+    setCookie(name,"",-1);
 }
+
 
 
 
 
       $(document).ready(function(){
             setup()
-            var beforeVal;
-            var currentVal;
-            $('input[name=radioOption]').mouseup(function(){
-              beforeVal = $('input[name=radioOption]:checked').val()
-            }).change(function(){
-              currentVal = $('input[name=radioOption]:checked').val()
-              console.log("beforeVal ="+beforeVal)
-              console.log("currentVal="+currentVal)
-              var lastPart = window.location.pathname.split('/')[2]
-              updatePoll(lastPart,currentVal,beforeVal)
+            var lastPart = window.location.pathname.split('/')[2]
+            var hasVoted = getCookie("hasVoted"+lastPart)
+            console.log("hasVoted="+hasVoted)
 
-            })
+            if(hasVoted != ""){
+              console.log("setting previous vote")
+              var lastVote = getCookie("votedOption")
+              clicks[currentClickIndex] = lastVote
+              console.log(clicks)
+              currentClickIndex++
+              $("input[name=radioOption][value=" + lastVote + "]").prop('checked', true);
+            } else {
+               $('input[name="radioOption"]').change(function(){
+                    console.log("changing")
+                    clicks[currentClickIndex++] = $("input[name=radioOption]:checked").val()
+                    console.log(clicks)
+                })
+              }
 
-            /*​;
-            $('input[type=radio][name=radioOption]').change(function(){
-                selected = $('input[name=radioOption]:checked', '#pollForm').val()
-                console.log(selected)
-                var lastPart = window.location.pathname.split('/')[2]
-                updatePoll(lastPart,selected)
-
-
-            })
-            */
       })
