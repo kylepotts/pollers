@@ -14,7 +14,7 @@ var log4js = require('log4js')
 var logger = log4js.getLogger()
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var session = require('cookie-session')
+var session = require('express-session')
 var mongo = require('mongodb');
 var db = require('mongoskin').db(mongoURI);
 var app = express();
@@ -25,11 +25,6 @@ var uuid = require('node-uuid');
 
 
 
-console.log("db="+db)
-db.collection('polls').find().toArray(function(err, result) {
-    if (err) throw err;
-    console.log(result);
-});
 
 /*
     Routes variables
@@ -65,22 +60,19 @@ app.use(session({
 }))
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Make db accessible
-app.use(function (req, res, next) {
-    console.log("doing stuff")
-    req.db = db;
-    req.io = io;
-    //req.session = session;
-    next();
-});
+
+
 app.use(app.router);
 
 
 app.get('/', routes.index);
 app.get('/newPoll', newPoll.newPoll);
 app.post('/newPoll', newPoll.newPollPost)
-app.get('/users', users.list);
 app.get('/poll/:id', pollsRoute.poll)
+
+
+
+
 
 /*
     Set up webSocket and functions
@@ -179,27 +171,15 @@ io.on('connection', function (socket) {
 
 
 
+  app.param('id', function(req,res, next, id){
+    db.collection('polls').findById(id, function (e, poll){
+    if (e) return next(e);
+    if (!poll) return next(new Error('Nothing is found'));
+    req.poll = poll;
+    next();
+  });
+});
 
-
-
-
-app.param('id', function (req, res, next, id) {
-    var endUrl = '/update' + id
-    req.collection = db.collection('polls').findById(id, function (e, result) {
-        if (e) return next(e)
-        else {
-            req.poll = result
-            if(session.visited == undefined){
-          console.log("undef")
-          uid = uuid.v4()
-          session.visited = {pollId:id,uuid:uid}
-          }
-            req.session = session
-            console.log(session.visited)
-            next()
-        }
-    })
-  })
 
 
 
