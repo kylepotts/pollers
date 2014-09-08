@@ -80,6 +80,11 @@ function eraseCookie(name) {
                     console.log("changing")
                     clicks[currentClickIndex++] = $("input[name=radioOption]:checked").val()
                     console.log(clicks)
+                    var curVal = clicks[currentClickIndex-1]
+                    var beforeVal = clicks[currentClickIndex-2]
+                    console.log("curval="+curVal)
+                    console.log("beforeVal="+beforeVal)
+                    updatePoll(lastPart,curVal,beforeVal)
                 })
               }
 
